@@ -1,0 +1,42 @@
+#floatbar {
+  text-align: right;
+  
+  direction: ltr;
+  background: rgb(44, 179, 240);
+  border: 1px;
+  border-color: white;
+  width: max-content;
+  height: max-content;
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translate(-20px, -50%);
+  display: grid;
+  grid-template-rows: max-content auto;
+  
+  box-shadow: 0 10px 25px rgba(44, 179, 240, 0.6);
+  border-radius: 12px;
+}
+
+.float-button {
+  
+}
+.float-icon {
+  font-size: 48px;
+  color: green;
+  
+}
+
+.float-icon>span {
+  display: block;
+  color: red;
+  position: relative;
+  font-size: small;
+  top: -10px;
+  right: 10px;
+  
+}
+
+.hide-sync-settings {
+  display:none;
+}
