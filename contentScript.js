@@ -1,35 +1,30 @@
-console.log("outside")
-let currentSongUrl;
-console.log("inside")
+var autoGet = false
+var autoPush = false
 
-let pub = true;
-let sub = true;
-var autoGet = false;
 var html = `
-<div style="height:1000px;width:500px;">
 <div id="floatbar" tabindex="1">
-  <span id="receive-icon" class="material-symbols-outlined receive-icon">
-    download
-  </span>
 
   <div class="float-button" >
   <span class="sync-settings hide-sync-settings">
-  <input class="sync-settings hide-sync-settings" type="checkbox"> automatically get
-  
-  <span class="float-icon material-symbols-outlined">
-    download
-    <span class="float-icon-badge material-symbols-outlined">
-    sync
-    </span>
-  </span>
-</div>
-  
-  
+  automatically push <input  id="checkbox-push" class="sync-settings hide-sync-settings" type="checkbox"> 
   </span>
   <span id="sync-publish" class="material-symbols-outlined">
     publish
   </span>
-  <span class="material-symbols-outlined">
+  </div>  
+
+  
+<div class="float-button" >
+<span class="sync-settings hide-sync-settings">
+automatically get <input id="checkbox-get" class="sync-settings hide-sync-settings" type="checkbox"> 
+  </span>
+  <span id="receive-icon" class="material-symbols-outlined receive-icon">
+    download
+  </span>  
+  </div>  
+
+
+  <!--span class="material-symbols-outlined">
     sync
   </span>
   <span class="material-symbols-outlined">
@@ -37,23 +32,34 @@ var html = `
   </span>
   <span class="material-symbols-outlined">
     sync_problem
-  </span>
+  </span-->
   
 <div class="float-button" >
 
     <input id="session-input" class="sync-settings hide-sync-settings">
   </input>
+  
+  </div>
+  <div class="float-button" >
+<a class="sync-settings hide-sync-settings" >
+  <span id="sync-random-icon" class="float-icon material-symbols-outlined">
+    casino
+  </span>
+  </a>
+  <a class="sync-settings hide-sync-settings" >
+  <span id="sync-share-icon" class="float-icon material-symbols-outlined">
+    share
+  </span>
+  </a>
   <span id="sync-settings-icon" class="float-icon material-symbols-outlined">
     settings
   </span>
-</div>
 </div>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 `
 document.body.insertAdjacentHTML("beforeend", html);
 
 function toggleSettingsVisibility() {
-  console.log("toggle")
   for (const x of document.getElementsByClassName('sync-settings')) { x.classList.toggle('hide-sync-settings') }
 }
 document.getElementById("sync-settings-icon").addEventListener('click', toggleSettingsVisibility);
@@ -65,21 +71,62 @@ function blurSettings(event) {
 }
 document.getElementById("floatbar").addEventListener('focusout', blurSettings);
 
+function randomSession() {
+  let randomString = (Math.random() + 1).toString(36).substring(2);
+  setSessionId(randomString);
+}
+document.getElementById("sync-random-icon").addEventListener('click', randomSession);
+
+function shareSession() {
+  let sessionId = document.getElementById("session-input").value;
+  const shareData = {
+    title: 'Synced Ultimate Guitar Session',
+    text: 'Join my session with id: ' + sessionId,
+    url: window.location.href + '?syncSessionId=' + sessionId
+  }
+  navigator.share(shareData)
+}
+document.getElementById("sync-share-icon").addEventListener('click', shareSession);
+
 document.getElementById("sync-publish").addEventListener('click', function () { let actualSongUrl = getSongUrl(document.location.href); console.log("publishing.", actualSongUrl); publishSongUrl() });
 
-function blurSessionInput(event) {
-  console.log(event.target.value)
-  chrome.storage.local.set({ session: event.target.value })
+function setSessionId(sessionId) {
+  document.getElementById("session-input").value = sessionId;
+  chrome.storage.local.set({ session: sessionId })
 }
+function blurSessionInput(event) {
+  setSessionId(event.target.value);
+}
+// check if query param for session was passed
+const urlSearchParams = new URLSearchParams(window.location.search);
+const params = Object.fromEntries(urlSearchParams.entries());
+if (params["syncSessionId"]) {
+  setSessionId(params["syncSessionId"])
+}
+
 document.getElementById("session-input").addEventListener('blur', blurSessionInput, true);
+
+// checkboxes
+document.getElementById("checkbox-get").addEventListener('change', function () {
+  console.log(this.checked)
+  autoGet = this.checked
+  chrome.storage.local.set({ autoGet: this.checked })
+});
+document.getElementById("checkbox-push").addEventListener('change', function () {
+  console.log(this.checked)
+  autoPush = this.checked
+  chrome.storage.local.set({ autoPush: this.checked })
+});
 
 /* storage initial check */
 chrome.storage.local.get(null, function (data) {
   document.getElementById("session-input").value = data["session"]
-  document.getElementById("sync-settings-auto-get").value = data["autoGet"]
-  autoPush = false
+  autoGet = data["autoGet"] ? true : false;
+  document.getElementById("checkbox-get").checked = autoGet
+  autoPush = data["autoPush"] ? true : false;
+  document.getElementById("checkbox-push").checked = autoPush
   let actualSongUrl = getSongUrl(document.location.href);
-  if (autoPush && (data["sessionSong"] === actualSongUrl)) {
+  if (autoPush && (data["sessionSong"] != getSongUrl(document.location.href))) {
     publishSongUrl()
   }
 });
@@ -106,6 +153,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         }
       }
     }
+    /*if (key === "autoGet") {
+      autoGet = newValue;
+    }
+    if (key === "autoPush") {
+      autoPush = newValue;
+    }*/
   }
 });
 

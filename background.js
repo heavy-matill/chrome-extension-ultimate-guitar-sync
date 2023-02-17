@@ -42,7 +42,6 @@ async function initialize() {
     }
     //client.end()
   })
-
 }
 
 var storageCache = {};

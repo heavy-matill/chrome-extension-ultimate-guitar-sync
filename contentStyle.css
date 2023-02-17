@@ -16,6 +16,7 @@
   
   box-shadow: 0 10px 25px rgba(44, 179, 240, 0.6);
   border-radius: 12px;
+  z-index: 1000000;
 }
 
 .float-button {
@@ -23,7 +24,6 @@
 }
 .float-icon {
   font-size: 48px;
-  color: green;
   
 }
 
