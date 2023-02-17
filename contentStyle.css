@@ -18,8 +18,11 @@
   border-radius: 28pt;
   z-index: 1000000;
   font-size: 24pt !important;
-} 
-#floatbar>* {margin: 4pt}
+}
+
+#floatbar>* {
+  margin: 4pt
+}
 
 .float-button>* {
   vertical-align: middle;
@@ -45,5 +48,16 @@
 }
 
 .receive-icon-available {
-  color: red;
+  color: #ffc600;
+  animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
