@@ -40,3 +40,7 @@
 .hide-sync-settings {
   display:none;
 }
+
+.receive-icon-available {
+  color: red;
+}
