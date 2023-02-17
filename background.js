@@ -25,20 +25,22 @@ async function initialize() {
   client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: userId })
 
   client.on('connect', function () {
-    client.subscribe('presence', function (err) {
+    /*client.subscribe('presence', function (err) {
       if (!err) {
         client.publish('presence', 'Hello mqtt')
       }
-    })
+    })*/
     client.subscribe(session)
   })
 
   client.on('message', function (topic, message) {
     console.log(topic.toString(), message.toString())
     if (topic === session) {
-      let sessionSongUrl = message.toString().replace("sessionSong:", "");
-      if (sessionSongUrl)
-        chrome.storage.local.set({ "sessionSong": sessionSongUrl })
+      if (message.toString().startsWith("sessionSong:")) {
+        let sessionSongUrl = message.toString().replace("sessionSong:", "");
+        if (sessionSongUrl)
+          chrome.storage.local.set({ "sessionSong": sessionSongUrl })
+      }
     }
     //client.end()
   })
@@ -50,7 +52,8 @@ chrome.storage.local.get(null, function (data) {
   initialize(); // All your code is contained here, or executes later that this
 });
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && tab.url.includes(baseSongUrl)) {
+  if ((changeInfo.status === 'complete') && tab.url) {
+    console.log(tab.url)
     chrome.scripting.executeScript({
       target: { tabId: tabId },
       files: ["utils2.js", "contentScript.js"]

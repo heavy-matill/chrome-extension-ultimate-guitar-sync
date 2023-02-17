@@ -19,7 +19,7 @@
       "assets/delete.png",
       "assets/save.png"
     ],
-    "matches": ["https://*.ultimate.guitar.com/*"]
+    "matches": ["*://*.ultimate-guitar.com/*"]
   }],
   "action": {
     "default_icon": {

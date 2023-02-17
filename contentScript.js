@@ -95,6 +95,12 @@ const params = Object.fromEntries(urlSearchParams.entries());
 if (params["syncSessionId"]) {
   setSessionId(params["syncSessionId"])
 }
+// hide push button if url is not a song
+if (!document.location.href.includes(baseSongUrl)) {
+  let publishElement = document.getElementById("sync-publish").parentElement
+  publishElement.classList.add("sync-settings")
+  publishElement.classList.add("hide-sync-settings")
+}
 
 document.getElementById("session-input").addEventListener('blur', blurSessionInput, true);
 
@@ -117,9 +123,18 @@ chrome.storage.local.get(null, function (data) {
   document.getElementById("checkbox-get").checked = autoGet
   autoPush = data["autoPush"] ? true : false;
   document.getElementById("checkbox-push").checked = autoPush
+
   let actualSongUrl = getSongUrl(document.location.href);
-  if (autoPush && (data["sessionSong"] != getSongUrl(document.location.href))) {
-    publishSongUrl()
+  if (data["sessionSong"] != actualSongUrl) {
+    if (autoPush) {
+      publishSongUrl()
+    }
+    else if (autoGet) {
+      receiveSong(newValue)
+    }
+    else {
+      receivedSongAvailable(newValue);
+    }
   }
 });
 /* storage listeners */
@@ -159,8 +174,8 @@ function receiveSong(songUrl) {
 }
 
 function receivedSongAvailable(songUrl) {
-  console.log("receivedSongAvailable", songUrl)
   let icon = document.getElementById('receive-icon');
+  icon.classList.remove(["sync-settings", "hide-sync-settings"])
   icon.classList.add('receive-icon-available');
   icon.addEventListener('click', function () {
     receiveSong(songUrl);
