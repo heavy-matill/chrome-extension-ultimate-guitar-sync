@@ -2,59 +2,51 @@ var autoGet = false
 var autoPush = false
 
 var html = `
-<div id="floatbar" tabindex="1">
+  <div id="floatbar" tabindex="1">
 
-  <div class="float-button" >
-  <span class="sync-settings hide-sync-settings">
-  automatically push <input  id="checkbox-push" class="sync-settings hide-sync-settings" type="checkbox"> 
-  </span>
-  <span id="sync-publish" class="material-symbols-outlined">
-    publish
-  </span>
-  </div>  
+    <div class="float-button">
+      <a class="sync-settings hide-sync-settings">
+        automatically push <input id="checkbox-push" class="sync-settings hide-sync-settings" type="checkbox">
+      </a>
+      <span id="sync-publish" class="material-symbols-outlined">
+        cloud_upload
+      </span>
+    </div>
 
-  
-<div class="float-button" >
-<span class="sync-settings hide-sync-settings">
-automatically get <input id="checkbox-get" class="sync-settings hide-sync-settings" type="checkbox"> 
-  </span>
-  <span id="receive-icon" class="material-symbols-outlined receive-icon">
-    download
-  </span>  
-  </div>  
+    <div class="float-button">
+      <a class="sync-settings hide-sync-settings">
+        automatically get <input id="checkbox-get" class="sync-settings hide-sync-settings" type="checkbox">
+      </a>
+      <span id="receive-icon" class="material-symbols-outlined receive-icon">
+        browser_updated
+      </span>
+    </div>
 
+    <div class="float-button sync-settings hide-sync-settings" style="text-align: left">
+      <a class="sync-settings hide-sync-settings">
+        Session ID
+      </a><a class="sync-settings hide-sync-settings">
+        <span id="sync-random-icon" class="float-icon material-symbols-outlined">
+          casino
+        </span>
+      </a>
+      <a class="sync-settings hide-sync-settings">
+        <span id="sync-share-icon" class="float-icon material-symbols-outlined">
+          share
+        </span>
+      </a>
+      <div>
+        <input id="session-input" class="sync-settings hide-sync-settings">
+        </input>
+      </div>
+    </div>
 
-  <!--span class="material-symbols-outlined">
-    sync
-  </span>
-  <span class="material-symbols-outlined">
-    sync_disabled
-  </span>
-  <span class="material-symbols-outlined">
-    sync_problem
-  </span-->
-  
-<div class="float-button" >
+    <div class="float-button">
+      <span id="sync-settings-icon" class="float-icon material-symbols-outlined">
+        settings
+      </span>
+    </div>
 
-    <input id="session-input" class="sync-settings hide-sync-settings">
-  </input>
-  
-  </div>
-  <div class="float-button" >
-<a class="sync-settings hide-sync-settings" >
-  <span id="sync-random-icon" class="float-icon material-symbols-outlined">
-    casino
-  </span>
-  </a>
-  <a class="sync-settings hide-sync-settings" >
-  <span id="sync-share-icon" class="float-icon material-symbols-outlined">
-    share
-  </span>
-  </a>
-  <span id="sync-settings-icon" class="float-icon material-symbols-outlined">
-    settings
-  </span>
-</div>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 `
 document.body.insertAdjacentHTML("beforeend", html);
