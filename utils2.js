@@ -8,6 +8,7 @@ async function getActiveTabURL() {
 }
 
 const baseSongUrl = "tabs.ultimate-guitar.com/tab/";
+const baseUGUrl = ".ultimate-guitar.com/";
 
 const baseSongUrlHttps = "https://" + baseSongUrl;
 

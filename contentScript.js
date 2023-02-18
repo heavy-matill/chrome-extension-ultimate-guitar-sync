@@ -23,20 +23,27 @@ var html = `
     </div>
 
     <div class="float-button sync-settings hide-sync-settings" style="text-align: left">
-      <a class="sync-settings hide-sync-settings">
-        Session ID
-      </a><a class="sync-settings hide-sync-settings">
-        <span id="sync-random-icon" class="float-icon material-symbols-outlined">
-          casino
-        </span>
-      </a>
-      <a class="sync-settings hide-sync-settings">
+    <a id="userCount">
+    0
+  </a><a>
+    <span id="sync-users-icon" class="float-icon material-symbols-outlined">
+      group
+    </span>
+  </a>
+  <a>
+  in Session
+</a><a>
+  <span id="sync-random-icon" class="float-icon material-symbols-outlined">
+    casino
+  </span>
+</a>
+      <a>
         <span id="sync-share-icon" class="float-icon material-symbols-outlined">
           share
         </span>
       </a>
       <div>
-        <input id="session-input" class="sync-settings hide-sync-settings">
+        <input id="session-input">
         </input>
       </div>
     </div>
@@ -62,6 +69,15 @@ function blurSettings(event) {
     toggleSettingsVisibility();
 }
 document.getElementById("floatbar").addEventListener('focusout', blurSettings);
+
+function countUsers() {
+  document.getElementById("userCount").innerHTML = "?"
+  chrome.runtime.sendMessage({
+    message: "countUsers",
+    payload: ""
+  })
+}
+document.getElementById("sync-users-icon").addEventListener('click', countUsers);
 
 function randomSession() {
   let randomString = (Math.random() + 1).toString(36).substring(2);
@@ -123,6 +139,8 @@ chrome.storage.local.get(null, function (data) {
   document.getElementById("checkbox-get").checked = autoGet
   autoPush = data["autoPush"] ? true : false;
   document.getElementById("checkbox-push").checked = autoPush
+  userCount = data["userCount"]?? 0;
+  document.getElementById("userCount").innerHTML = userCount
 
   let actualSongUrl = getSongUrl(document.location.href);
   if (data["sessionSong"] != actualSongUrl) {
@@ -146,8 +164,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     );
     if (key === "session") {
       document.getElementById("session-input").value = newValue;
-    }
-    if (key === "sessionSong") {
+    } else if (key === "sessionSong") {
       if (newValue) {
         if (newValue != getSongUrl(document.location.href)) {
           if (autoGet)
@@ -159,6 +176,8 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
           receivedSongIsOurs();
         }
       }
+    } else if (key === "userCount") {
+      document.getElementById("userCount").innerHTML = newValue.toString();
     }
     /*if (key === "autoGet") {
       autoGet = newValue;
@@ -185,7 +204,7 @@ function receivedSongAvailable(songUrl) {
 function receivedSongIsOurs() {
   let icon = document.getElementById('receive-icon');
   icon.classList.remove('receive-icon-available');
-  icon.removeAttr('onclick');
+  icon.removeAttribute('onclick');
 }
 
 /* message listeners */
@@ -209,3 +228,50 @@ function publishSongUrl() {
   }*/);
 }
 
+
+// make draggable
+
+// Make the DIV element draggable:
+dragElement(document.getElementById("floatbar"), document.getElementById("sync-settings-icon"));
+
+function dragElement(elmnt, dragpoint) {
+  var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  if (dragpoint) {
+    // if present, the header is where you move the DIV from:
+    dragpoint.onmousedown = dragMouseDown;
+  } else {
+    // otherwise, move the DIV from anywhere inside the DIV:
+    elmnt.onmousedown = dragMouseDown;
+  }
+
+  function dragMouseDown(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // get the mouse cursor position at startup:
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    // call a function whenever the cursor moves:
+    document.onmousemove = elementDrag;
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    // calculate the new cursor position:
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    // set the element's new position:
+    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+    // top down only
+    //elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+  }
+
+  function closeDragElement() {
+    // stop moving when mouse button is released:
+    document.onmouseup = null;
+    document.onmousemove = null;
+  }
+}
