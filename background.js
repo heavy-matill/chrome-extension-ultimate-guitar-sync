@@ -16,51 +16,51 @@ async function initialize() {
   }
   else {
     userId = `${Date.now()}-${Math.floor(Math.random() * 100)}`;
-    chrome.storage.local.set({ "userId": userId });
+    chrome.storage.sync.set({ "userId": userId });
   }
   if (storageCache["session"]) {
     session = storageCache["session"];
   }
   else {
     session = "session";
-    chrome.storage.local.set({ "session": session });
+    chrome.storage.sync.set({ "session": session });
   }
-  console.log(userId)
-  client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: userId })
 
-  client.on('connect', function () {
-    client.subscribe(session, function (err) {
-      if (!err) {
-        countUsers();
-      }
-    })
-  })
+  client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: userId })
 
   client.on('message', function (topic, message) {
     console.log(topic.toString(), message.toString())
+    console.log(session)
     if (topic === session) {
-      //JSON.parse(JSON.stringify({a:"asd",b:"yxc"}))
       parsed = JSON.parse(message);
+      console.log(parsed)
       if (parsed.user) {
         if (parsed.sessionSong && (parsed.user != userId)) {
-          chrome.storage.local.set({ "sessionSong": parsed.sessionSong })
+          console.log("storing", { "sessionSong": parsed.sessionSong })
+          chrome.storage.sync.set({ "sessionSong": parsed.sessionSong })
         } else if (parsed.scan) {
           userCount = 0;
           countingUser = parsed.user;
-          chrome.storage.local.set({ "userCount": userCount })
+          chrome.storage.sync.set({ "userCount": userCount })
           // respond        
-          client.publish(session, JSON.stringify({ user: userId, scanResponse: countingUser }))
+          client.publish(session, JSON.stringify({ user: userId, scanResponse: countingUser }), { qos: 2 })
         } else if (parsed.scanResponse && (parsed.scanResponse === countingUser)) {
           userCount++;
-          chrome.storage.local.set({ "userCount": userCount })
+          chrome.storage.sync.set({ "userCount": userCount })
         }
       }
     }
   })
+
+  client.on('connect', function () {
+    subscribeNewSession(session, false)
+  })
+
+
 }
 
 var storageCache = {};
-chrome.storage.local.get(null, function (data) {
+chrome.storage.sync.get(null, function (data) {
   storageCache = data;
   initialize(); // All your code is contained here, or executes later that this
 });
@@ -80,16 +80,17 @@ chrome.runtime.onMessage.addListener((obj, sender, response) => {
   console.log(obj)
   if (message === "publishSong") {
     console.log("Publishing via mqtt:", session, payload)
-    client.publish(session, JSON.stringify({ user: userId, sessionSong: payload }))
+    client.publish(session, JSON.stringify({ user: userId, sessionSong: payload }), { retain: true })
   } else if (message === "countUsers") {
     countUsers();
   }
 });
-function subscribeNewSession(oldSession, newSession) {
-  console.log("subscribing new session")
+function subscribeNewSession(newSession, oldSession) {
+  //console.log("subscribing new session")
+  session = newSession;
   if (oldSession)
     client.unsubscribe(oldSession)
-  chrome.storage.local.set({ sessionSong: "" })
+  chrome.storage.sync.set({ sessionSong: "", session: session })
   client.subscribe(session, function (err) {
     if (!err) {
       countUsers();
@@ -104,11 +105,11 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
       `Old value was "${oldValue}", new value is "${newValue}".`
     );
     if (key === "session") {
-      subscribeNewSession(oldValue, newValue)
+      subscribeNewSession(newValue, oldValue)
     }
   }
 });
 
 function countUsers() {
-  client.publish(session, JSON.stringify({ user: userId, scan: true }))
+  client.publish(session, JSON.stringify({ user: userId, scan: true }), { qos: 2 })
 }

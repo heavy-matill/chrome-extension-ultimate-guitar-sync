@@ -100,7 +100,7 @@ document.getElementById("sync-publish").addEventListener('click', function () { 
 
 function setSessionId(sessionId) {
   document.getElementById("session-input").value = sessionId;
-  chrome.storage.local.set({ session: sessionId })
+  chrome.storage.sync.set({ session: sessionId })
 }
 function blurSessionInput(event) {
   setSessionId(event.target.value);
@@ -124,35 +124,30 @@ document.getElementById("session-input").addEventListener('blur', blurSessionInp
 document.getElementById("checkbox-get").addEventListener('change', function () {
   console.log(this.checked)
   autoGet = this.checked
-  chrome.storage.local.set({ autoGet: this.checked })
+  chrome.storage.sync.set({ autoGet: this.checked })
 });
 document.getElementById("checkbox-push").addEventListener('change', function () {
   console.log(this.checked)
   autoPush = this.checked
-  chrome.storage.local.set({ autoPush: this.checked })
+  chrome.storage.sync.set({ autoPush: this.checked })
 });
 
 /* storage initial check */
-chrome.storage.local.get(null, function (data) {
+chrome.storage.sync.get(null, function (data) {
   document.getElementById("session-input").value = data["session"]
   autoGet = data["autoGet"] ? true : false;
   document.getElementById("checkbox-get").checked = autoGet
   autoPush = data["autoPush"] ? true : false;
   document.getElementById("checkbox-push").checked = autoPush
-  userCount = data["userCount"]?? 0;
+  userCount = data["userCount"] ?? 0;
   document.getElementById("userCount").innerHTML = userCount
 
   let actualSongUrl = getSongUrl(document.location.href);
-  if (data["sessionSong"] != actualSongUrl) {
-    if (autoPush) {
+  if (autoPush) {
+    if (data["sessionSong"] != actualSongUrl)
       publishSongUrl()
-    }
-    else if (autoGet) {
-      receiveSong(newValue)
-    }
-    else {
-      receivedSongAvailable(newValue);
-    }
+  } else {
+    handleNewSong(data["sessionSong"])
   }
 });
 /* storage listeners */
@@ -165,28 +160,25 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (key === "session") {
       document.getElementById("session-input").value = newValue;
     } else if (key === "sessionSong") {
-      if (newValue) {
-        if (newValue != getSongUrl(document.location.href)) {
-          if (autoGet)
-            receiveSong(newValue)
-          else {
-            receivedSongAvailable(newValue);
-          }
-        } else {
-          receivedSongIsOurs();
-        }
-      }
+      handleNewSong(newValue)
     } else if (key === "userCount") {
       document.getElementById("userCount").innerHTML = newValue.toString();
     }
-    /*if (key === "autoGet") {
-      autoGet = newValue;
-    }
-    if (key === "autoPush") {
-      autoPush = newValue;
-    }*/
   }
 });
+
+function handleNewSong(songUrl) {
+  console.log("handling new song", songUrl)
+  if (songUrl && (songUrl != getSongUrl(document.location.href))) {
+    if (autoGet)
+      receiveSong(songUrl)
+    else {
+      receivedSongAvailable(songUrl);
+    }
+  } else {
+    noGettableSong();
+  }
+}
 
 function receiveSong(songUrl) {
   window.location = baseSongUrlHttps + songUrl;
@@ -201,9 +193,13 @@ function receivedSongAvailable(songUrl) {
   });
 }
 
-function receivedSongIsOurs() {
+function noGettableSong() {
+  console.log("not gettable")
   let icon = document.getElementById('receive-icon');
   icon.classList.remove('receive-icon-available');
+  icon.parentElement.classList.add("sync-settings");
+  if (icon.previousSibling.classList.includes("hide-sync-settings"))
+    icon.parentElement.classList.add("hide-sync-settings");
   icon.removeAttribute('onclick');
 }
 
