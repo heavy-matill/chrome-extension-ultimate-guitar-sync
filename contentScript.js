@@ -122,12 +122,10 @@ document.getElementById("session-input").addEventListener('blur', blurSessionInp
 
 // checkboxes
 document.getElementById("checkbox-get").addEventListener('change', function () {
-  console.log(this.checked)
   autoGet = this.checked
   chrome.storage.sync.set({ autoGet: this.checked })
 });
 document.getElementById("checkbox-push").addEventListener('change', function () {
-  console.log(this.checked)
   autoPush = this.checked
   chrome.storage.sync.set({ autoPush: this.checked })
 });
@@ -135,10 +133,10 @@ document.getElementById("checkbox-push").addEventListener('change', function () 
 /* storage initial check */
 chrome.storage.sync.get(null, function (data) {
   document.getElementById("session-input").value = data["session"]
-  autoGet = data["autoGet"] ? true : false;
-  document.getElementById("checkbox-get").checked = autoGet
   autoPush = data["autoPush"] ? true : false;
   document.getElementById("checkbox-push").checked = autoPush
+  autoGet = data["autoGet"] ? true : false;
+  document.getElementById("checkbox-get").checked = autoGet
   userCount = data["userCount"] ?? 0;
   document.getElementById("userCount").innerHTML = userCount
 

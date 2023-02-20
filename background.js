@@ -47,6 +47,11 @@ async function initialize() {
         } else if (parsed.scanResponse && (parsed.scanResponse === countingUser)) {
           userCount++;
           chrome.storage.sync.set({ "userCount": userCount })
+        } else if (parsed.sync && (parsed.user != userId)) {
+          chrome.runtime.sendMessage({
+            message: "publishSync",
+            payload: parsed.sync
+          })
         }
       }
     }
@@ -66,10 +71,9 @@ chrome.storage.sync.get(null, function (data) {
 });
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if ((changeInfo.status === 'complete') && tab.url && tab.url.includes(baseUGUrl)) {
-    console.log(tab.url)
     chrome.scripting.executeScript({
       target: { tabId: tabId },
-      files: ["utils2.js", "contentScript.js"]
+      files: ["utils2.js", "contentScript.js", "controls.js"]
     })
   }
 });
@@ -83,6 +87,8 @@ chrome.runtime.onMessage.addListener((obj, sender, response) => {
     client.publish(session, JSON.stringify({ user: userId, sessionSong: payload }), { retain: true })
   } else if (message === "countUsers") {
     countUsers();
+  } else if (message === "publishSync") {
+    client.publish(session, JSON.stringify({ user: userId, sync: payload }), { qos: 1 })
   }
 });
 function subscribeNewSession(newSession, oldSession) {
