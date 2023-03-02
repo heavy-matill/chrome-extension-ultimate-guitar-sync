@@ -69,12 +69,24 @@ chrome.storage.sync.get(null, function (data) {
   storageCache = data;
   initialize(); // All your code is contained here, or executes later that this
 });
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if ((changeInfo.status === 'complete') && tab.url && tab.url.includes(baseUGUrl)) {
-    chrome.scripting.executeScript({
-      target: { tabId: tabId },
-      files: ["utils2.js", "contentScript.js", "controls.js"]
-    })
+    // check if tab has existed before and has settings for sync options
+    chrome.storage.sync.get(null, async (data) => {
+      // send tabId and data to the tab      
+      await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        args: [tabId, data],
+        func: (id, d) => {
+          window.tabId = id;
+          window.data = d;
+        }
+      });
+      await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        files: ["words.js", "utils2.js", "contentScript.js", "controls.js"]
+      });
+    });
   }
 });
 
