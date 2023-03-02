@@ -7,7 +7,9 @@ if (tabId in data) {
 }
 var autoGet = tabSettings.autoGet;
 var autoPush = tabSettings.autoPush;
-var sessionId = data['sessionId'];
+var sessionId = data['sessionId'] ?? randomSession();
+var initialDragTop = data['dragTop'] ?? "50%";
+var initialDragLeft = data['dragLeft'] ?? "0px";
 
 /* overwrite with query params */
 // check if query param for session was passed
@@ -105,6 +107,7 @@ function setSessionId(sId) {
   sessionId = sId;
   elDlgSessionInput.value = sId;
   elDlgSessionLabel.innerHTML = sId;
+  chrome.storage.sync.set({ "sessionId": sessionId });
   countUsers();
 }
 
@@ -116,9 +119,9 @@ const elSession = document.getElementById("sync-session");
 const elUserCount = document.getElementById("sync-userCount");
 
 var allowClick = true;
-elPublish.addEventListener("click", () => {if(allowClick) publish()});
-elGet.addEventListener("click", () => {if(allowClick) get()});
-elSession.addEventListener("click",() => {if(allowClick) elDlgBackground.showModal()}); 
+elPublish.addEventListener("click", () => { if (allowClick) publish() });
+elGet.addEventListener("click", () => { if (allowClick) get() });
+elSession.addEventListener("click", () => { if (allowClick) elDlgBackground.showModal() });
 
 function setAutoGet(b) {
   autoGet = b;
@@ -145,7 +148,7 @@ function publish(event) {
   } else {
     setAutoPublish(true);
     // actually publish
-    publishSongUrl() 
+    publishSongUrl()
   }
 }
 
@@ -184,11 +187,12 @@ function deactivate(el) {
 }
 
 function randomSession() {
-  let randomString = (Math.random() + 1).toString(36).substring(2);
-  setSessionId(randomString);
+  return (Math.random() + 1).toString(36).substring(2);
 }
 
-elDlgRandom.addEventListener("click", randomSession);
+elDlgRandom.addEventListener("click", () => {
+  setSessionId(randomSession())
+});
 
 function shareSession() {
   const shareData = {
@@ -226,7 +230,7 @@ if (!document.location.href.includes(baseSongUrl)) {
 setSessionId(sessionId); // somewhere later!
 
 /* storage initial check */
-chrome.storage.sync.get(null, function (data) {
+/* chrome.storage.sync.get(null, function (data) {
   document.getElementById("session-input").value = data["session"]
   autoPush = data["autoPush"] ? true : false;
   document.getElementById("checkbox-push").checked = autoPush
@@ -243,7 +247,7 @@ chrome.storage.sync.get(null, function (data) {
   } else {
     handleNewSong(data["sessionSong"])
   }
-});
+}); */
 /* storage listeners */
 chrome.storage.onChanged.addListener((changes, namespace) => {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
@@ -308,8 +312,10 @@ chrome.runtime.onMessage.addListener((obj, sender, response) => {
 /* Make the DIV element draggable */
 const dragDelay = 200;
 var dragTimeout;
-
-dragElement(document.getElementById("floatbar"),document.getElementById("floatbar"));
+const elFloatbar = document.getElementById("floatbar");
+elFloatbar.style.top = initialDragTop;
+elFloatbar.style.left = initialDragLeft;
+dragElement(elFloatbar,elFloatbar);
 
 function dragElement(elmnt, dragpoint) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -322,10 +328,10 @@ function dragElement(elmnt, dragpoint) {
   }
 
   function dragMouseDown(e) {
-    console.log("dragMouseDown") 
+    console.log("dragMouseDown")
     clearTimeout(dragTimeout);
     console.log(allowClick)
-    dragTimeout = setTimeout(() => allowClick = false,dragDelay)
+    dragTimeout = setTimeout(() => allowClick = false, dragDelay)
     e = e || window.event;
     e.preventDefault();
     // get the mouse cursor position at startup:
@@ -346,15 +352,18 @@ function dragElement(elmnt, dragpoint) {
     pos3 = e.clientX;
     pos4 = e.clientY;
     // set the element's new position:
-    elmnt.style.top = Math.min(elmnt.parentElement.offsetHeight - elmnt.offsetHeight, Math.max(0,elmnt.offsetTop - pos2)) + "px";
-    elmnt.style.left = Math.min(elmnt.parentElement.offsetWidth - elmnt.offsetWidth-1, Math.max(0, elmnt.offsetLeft - pos1)) + "px";
+    elmnt.style.top = Math.min(elmnt.parentElement.offsetHeight - elmnt.offsetHeight, Math.max(0, elmnt.offsetTop - pos2)) + "px";
+    elmnt.style.left = Math.min(elmnt.parentElement.offsetWidth - elmnt.offsetWidth - 1, Math.max(0, elmnt.offsetLeft - pos1)) + "px";
   }
 
   function closeDragElement() {
-    console.log("closeDragElement") 
+    console.log("closeDragElement")
     console.log(allowClick)
     clearTimeout(dragTimeout);
-    dragTimeout = setTimeout(() => allowClick = true,dragDelay)
+    dragTimeout = setTimeout(() => {
+      allowClick = true
+      chrome.storage.sync.set({ dragTop: elmnt.style.top, dragLeft: elmnt.style.left });
+    }, dragDelay)
     // stop moving when mouse button is released:
     document.onmouseup = null;
     document.onmousemove = null;
