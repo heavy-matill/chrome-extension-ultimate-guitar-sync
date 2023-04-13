@@ -146,7 +146,7 @@ if (splitUrl[splitUrl.length - 2] === "official") {
         function publishSync() {
             if (autoPush)
                 chrome.runtime.sendMessage({
-                    message: "publishSync",
+                    action: "publishSync",
                     payload: JSON.stringify({ song: getSongUrl(document.location.href), pitch: pitch, transpose: transpose, time: time })
                 })
         }
