@@ -33,26 +33,32 @@ async function initialize() {
     console.log(session)
     if (topic === session) {
       parsed = JSON.parse(message);
-      console.log(parsed)
-      if (parsed.user) {
-        if (parsed.sessionSong && (parsed.user != userId)) {
-          console.log("storing", { "sessionSong": parsed.sessionSong })
-          chrome.storage.sync.set({ "sessionSong": parsed.sessionSong })
-        } else if (parsed.scan) {
-          userCount = 0;
-          countingUser = parsed.user;
-          chrome.storage.sync.set({ "userCount": userCount })
-          // respond        
-          client.publish(session, JSON.stringify({ user: userId, scanResponse: countingUser }), { qos: 2 })
-        } else if (parsed.scanResponse && (parsed.scanResponse === countingUser)) {
-          userCount++;
-          chrome.storage.sync.set({ "userCount": userCount })
-        } else if (parsed.sync && (parsed.user != userId)) {
-          chrome.runtime.sendMessage({
-            message: "publishSync",
-            payload: parsed.sync
-          })
-        }
+      console.log("parsed", parsed)
+      if (parsed?.action == "publish") {
+        //console.log("storing necessary?", { "url": parsed.url })
+        //chrome.storage.sync.set({ "url": parsed.url })
+        chrome.tabs.query({ url: urlPattern }).then(async (tabs) => {
+          console.log("tab", tabs)
+          for (const tab of tabs) {
+            if (!tab.url.includes(parsed.url))
+            console.log("sending Message to tab ", tab.id)
+              await chrome.tabs.sendMessage(tab.id, parsed)
+          }
+        })
+      } else if (parsed.scan) {
+        userCount = 0;
+        countingUser = parsed.user;
+        chrome.storage.sync.set({ "userCount": userCount })
+        // respond        
+        client.publish(session, JSON.stringify({ user: userId, scanResponse: countingUser }), { qos: 2 })
+      } else if (parsed.scanResponse && (parsed.scanResponse === countingUser)) {
+        userCount++;
+        chrome.storage.sync.set({ "userCount": userCount })
+      } else if (parsed.sync && (parsed.user != userId)) {
+        chrome.runtime.sendMessage({
+          action: "publishSync",
+          payload: parsed.sync
+        })
       }
     }
   })
@@ -92,14 +98,14 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
 
 chrome.runtime.onMessage.addListener((obj, sender, response) => {
-  const { message, payload } = obj;
+  const { action, url, tabId, title, artist, time, payload } = obj;
   console.log(obj)
-  if (message === "publishSong") {
-    console.log("Publishing via mqtt:", session, payload)
-    client.publish(session, JSON.stringify({ user: userId, sessionSong: payload }), { retain: true })
-  } else if (message === "countUsers") {
+  if (action === "publish") {
+    console.log("Publishing via mqtt:", session, action)
+    client.publish(session, JSON.stringify({ action: action, userId: userId, title: title, artist: artist, tabId: tabId, url: url, time: time }), { retain: true })
+  } else if (action === "countUsers") {
     countUsers();
-  } else if (message === "publishSync") {
+  } else if (action === "publishSync") {
     client.publish(session, JSON.stringify({ user: userId, sync: payload }), { qos: 1 })
   }
 });

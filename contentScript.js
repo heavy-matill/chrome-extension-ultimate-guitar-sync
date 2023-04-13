@@ -1,31 +1,6 @@
-console.log(tabId, data)
-if (tabId in data) {
-  var tabSettings = data[tabId]
-} else {
-  var tabSettings = { autoGet: false, autoPush: false }
-  chrome.storage.sync.set({ [tabId]: tabSettings });
-}
-var autoGet = tabSettings.autoGet;
-var autoPush = tabSettings.autoPush;
-var sessionId = data['sessionId'] ?? randomSession();
-var initialDragTop = data['dragTop'] ?? "50%";
-var initialDragLeft = data['dragLeft'] ?? "0px";
-
-/* overwrite with query params */
-// check if query param for session was passed
-const urlSearchParams = new URLSearchParams(window.location.search);
-const params = Object.fromEntries(urlSearchParams.entries());
-if (params["syncSessionId"]) {
-  sessionId = params["syncSessionId"];
-  autoGet = true;
-  autoPush = false;
-}
-
 var html = `
   <div id="floatbar" tabindex="1">
-    <div id="sync-link"><a>
-        Artist - Song Title
-      </a></div>
+    <a id="sync-link" class="sync-link"></a>
     <div id="sync-get" class="sync-icon sync-icon-button sync-active">
       <svg viewBox="0 0 640 512 " width="100" title="download">
         <path d="m 640,357.65545 c 0,64 -64,121.6 -128,121.6 -64,0 -309.5597,1.67523 -384,0 -64,0 -128,-64 -128,-128 v -192 C 0,95.255453 64,31.255453 128,31.255453 h 384 c 64,0 128,64 128,127.999997 z M 425.38689,253.73585 h -65.4 v -112 c 0,-8.8 -7.2,-16 -16,-16 h -48 c -8.8,0 -16,7.20001 -16,16 v 112 h -65.4 c -14.3,0 -21.4,17.2 -11.3,27.3 l 105.4,105.4 c 6.2,6.2 16.4,6.2 22.6,0 l 105.4,-105.4 c 10.1,-10.1 2.9,-27.3 -11.3,-27.3 z" />
@@ -103,26 +78,66 @@ const elDlg = document.getElementById('sync-session-actual-dialog');
 elDlg.addEventListener('click', (event) => event.stopPropagation());
 
 elDlgSessionInput.addEventListener('blur', (event) => setSessionId(event.target.value));
-function setSessionId(sId) {
+function setSessionId(sId, bCount = true) {
   sessionId = sId;
   elDlgSessionInput.value = sId;
   elDlgSessionLabel.innerHTML = sId;
   chrome.storage.sync.set({ "sessionId": sessionId });
-  countUsers();
+  if (bCount)
+    countUsers();
 }
 
 /* Other */
-const elLink = document.getElementById("synk-link");
+const elLink = document.getElementById("sync-link");
 const elGet = document.getElementById("sync-get");
 const elPublish = document.getElementById("sync-publish");
 const elSession = document.getElementById("sync-session");
 const elUserCount = document.getElementById("sync-userCount");
+const elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];
 
 var allowClick = true;
 elPublish.addEventListener("click", () => { if (allowClick) publish() });
 elGet.addEventListener("click", () => { if (allowClick) get() });
 elSession.addEventListener("click", () => { if (allowClick) elDlgBackground.showModal() });
 
+
+/* initialize values */
+
+console.log(tabId, data)
+if (tabId in data) {
+  var tabSettings = data[tabId]
+} else {
+  var tabSettings = { autoGet: false, autoPush: false }
+}
+
+var autoGet = false;
+var autoPush = false;
+var sessionId = data['sessionId'] ?? randomSession();
+var initialDragTop = data['dragTop'] ?? "50%";
+var initialDragLeft = data['dragLeft'] ?? "0px";
+
+/* overwrite with query params */
+// check if query param for session was passed
+const urlSearchParams = new URLSearchParams(window.location.search);
+const params = Object.fromEntries(urlSearchParams.entries());
+if (params["syncSessionId"]) {
+  sessionId = params["syncSessionId"];
+  autoGet = true;
+  autoPush = false;
+  setSessionId(sessionId, true)
+} else {
+  setSessionId(sessionId, false)
+  if (tabSettings?.autoGet) {
+    setAutoGet(true)
+  } else if (tabSettings?.autoPush) {
+    setAutoPublish(true)
+    console.log("Tab was initially set to autoPush=", autoPush)
+    // actually publish
+    publishSongUrl()
+  }
+}
+
+/* functions */
 function setAutoGet(b) {
   autoGet = b;
   if (b) {
@@ -130,6 +145,9 @@ function setAutoGet(b) {
     autoPush = false;
     deactivate(elPublish);
   } else deactivate(elGet);
+  tabSettings.autoGet = autoGet;
+  tabSettings.autoPush = autoPush;
+  chrome.storage.sync.set({ [tabId]: tabSettings });
 }
 
 function setAutoPublish(b) {
@@ -139,6 +157,9 @@ function setAutoPublish(b) {
     autoGet = false;
     deactivate(elGet);
   } else deactivate(elPublish);
+  tabSettings.autoGet = autoGet;
+  tabSettings.autoPush = autoPush;
+  chrome.storage.sync.set({ [tabId]: tabSettings });
 }
 
 function publish(event) {
@@ -155,10 +176,13 @@ function publish(event) {
 function publishSongUrl() {
   // send message to background worker
   let actualSongUrl = getSongUrl(document.location.href);
-  console.log("publishSongUrl", actualSongUrl)
+  console.log("publishSongUrl", actualSongUrl, elHeader.innerText)
   chrome.runtime.sendMessage({
-    message: "publishSong",
-    payload: actualSongUrl
+    action: "publish",
+    url: actualSongUrl,
+    title: elHeader.children[0].innerText,
+    artist: elHeader.children[1].innerText,
+    tabId: tabId,
   }/*, response => {
     if (response.message === 'success') {
       ce_name.innerHTML = `Hello ${ce_input.value}`;
@@ -208,7 +232,7 @@ function countUsers() {
   elDlgUserCount.innerHTML = "?"
   elUserCount.innerHTML = "?"
   chrome.runtime.sendMessage({
-    message: "countUsers",
+    action: "countUsers",
     payload: ""
   })
 }
@@ -227,7 +251,6 @@ if (!document.location.href.includes(baseSongUrl)) {
 
 
 /* handle initially set values */
-setSessionId(sessionId); // somewhere later!
 
 /* storage initial check */
 /* chrome.storage.sync.get(null, function (data) {
@@ -266,16 +289,18 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   }
 });
 
-function handleNewSong(songUrl) {
-  console.log("handling new song", songUrl) // also handle time pitch etc
-  if (songUrl && (songUrl != getSongUrl(document.location.href))) {
+function handleNewSong(songUrl, title, artist, time) {
+  console.log("handling new song and time", songUrl, title, artist, time)
+  if (songUrl == getSongUrl(document.location.href)) {
+    // is current Song
+    // handle time
+  } else {
     if (autoGet)
       window.location = buildSongUrl(songUrl)
     else {
-      receivedSongAvailable(songUrl);
+      setAutoPublish(false);
+      receivedSongAvailable(songUrl, title, artist);
     }
-  } else {
-    noGettableSong();
   }
 }
 
@@ -283,25 +308,19 @@ function buildSongUrl(songUrl) {
   return baseSongUrlHttps + songUrl;
 }
 
-function receivedSongAvailable(songUrl) {
+function receivedSongAvailable(songUrl, title, artist) {
   elLink.classList.remove(["hide"])
   elLink.href = buildSongUrl(songUrl);
-}
-
-function noGettableSong() {
-  console.log("not gettable")
-  let icon = document.getElementById('receive-icon');
-  icon.classList.remove('receive-icon-available');
-  icon.parentElement.classList.add("sync-settings");
-  if (icon.previousSibling.classList.includes("hide-sync-settings"))
-    icon.parentElement.classList.add("hide-sync-settings");
-  icon.removeAttribute('onclick');
+  elLink.innerHTML = `${title}<br/>by <b>${artist}</b>`;
 }
 
 /* message listeners */
 chrome.runtime.onMessage.addListener((obj, sender, response) => {
-  const { type, songUrl } = obj;
-  if (type === "anything?") {
+  console.log("got message", obj)
+  //   const { action, payload } = obj;
+  if (obj?.action === "publish") {
+    console.log("got publish Message:", obj)
+    handleNewSong(obj.url, obj.title, obj.artist, 0)
   }
 });
 
@@ -313,9 +332,10 @@ chrome.runtime.onMessage.addListener((obj, sender, response) => {
 const dragDelay = 200;
 var dragTimeout;
 const elFloatbar = document.getElementById("floatbar");
+elFloatbar.style.lineHeight = "16px";
 elFloatbar.style.top = initialDragTop;
 elFloatbar.style.left = initialDragLeft;
-dragElement(elFloatbar,elFloatbar);
+dragElement(elFloatbar, elFloatbar);
 
 function dragElement(elmnt, dragpoint) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;

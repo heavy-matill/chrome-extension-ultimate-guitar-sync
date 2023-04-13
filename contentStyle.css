@@ -12,13 +12,13 @@
 
   direction: ltr;
   background: rgb(var(--pure-material-background-rgb));
-  border: 1px;
+  border: 1px;    
   border-color: white;
   /*width: max-content;
   height: max-content;*/
   position: fixed;
   top: 50%;
-  //transform: translate(-20px, -50%);  
+  /*transform: translate(-20px, -50%);  */
   box-shadow: 0 4px 10px 0 rgba(0,0,0, 0.3);
   border-radius: 1000px;
   z-index: 1000000;
@@ -68,7 +68,7 @@ div.sync-badge {
     position: absolute;
     -webkit-transform: translate(0%, -50%);
   font-weight: 600;
-  color: #ffc600;
+  color: rgb(var(--pure-material-primary-rgb));
   filter:  drop-shadow(1px 1px 1px black) drop-shadow(0 -1px 1px black);
 }
 
