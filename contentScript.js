@@ -185,20 +185,22 @@ function publish(event) {
 
 function publishSongUrl() {
   // send message to background worker
-  let actualSongUrl = getSongUrl(document.location.href);
-  console.log("publishSongUrl", actualSongUrl)
-  console.log(document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0])
-  chrome.runtime.sendMessage({
-    action: "publish",
-    url: actualSongUrl,
-    title: elHeader.children[0].innerText,
-    artist: elHeader.children[1].innerText,
-    tabId: tabId,
-  }/*, response => {
+  if (document.location.href.includes(baseSongUrl)) {
+    let actualSongUrl = getSongUrl(document.location.href);
+    console.log("publishSongUrl", actualSongUrl)
+    console.log(document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0])
+    chrome.runtime.sendMessage({
+      action: "publish",
+      url: actualSongUrl,
+      title: elHeader.children[0].innerText,
+      artist: elHeader.children[1].innerText,
+      tabId: tabId,
+    }/*, response => {
     if (response.message === 'success') {
       ce_name.innerHTML = `Hello ${ce_input.value}`;
     }
   }*/);
+  }
 }
 
 function get(event) {
@@ -250,6 +252,7 @@ function countUsers() {
 
 // hide push button if url is not a song
 if (!document.location.href.includes(baseSongUrl)) {
+  console.log("not a song url")
   elPublish.classList.add("sync-settings")
   elPublish.classList.add("hide-sync-settings")
 }
@@ -401,6 +404,7 @@ function dragElement(elmnt, dragpoint) {
   }
 }
 
-window.onload = function() {
+window.onload = function () {
   console.log("running onload")
-  elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];}
+  elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];
+}
