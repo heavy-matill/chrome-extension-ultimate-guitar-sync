@@ -40,9 +40,14 @@ async function initialize() {
         chrome.tabs.query({ url: urlPattern }).then(async (tabs) => {
           console.log("tab", tabs)
           for (const tab of tabs) {
-            if (!tab.url.includes(parsed.url))
-            console.log("sending Message to tab ", tab.id)
-              await chrome.tabs.sendMessage(tab.id, parsed)
+            if (!tab.url.includes(parsed.url)) {
+              console.log("sending Message to tab ", tab.id)
+              try {
+                await chrome.tabs.sendMessage(tab.id, parsed)
+              } catch {
+                console.log("tab does not respont")
+              }
+            }
           }
         })
       } else if (parsed.scan) {
