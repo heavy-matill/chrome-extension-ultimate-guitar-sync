@@ -93,7 +93,8 @@ const elGet = document.getElementById("sync-get");
 const elPublish = document.getElementById("sync-publish");
 const elSession = document.getElementById("sync-session");
 const elUserCount = document.getElementById("sync-userCount");
-const elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];
+
+var elHeader;
 
 var allowClick = true;
 elPublish.addEventListener("click", () => { if (allowClick) publish() });
@@ -133,7 +134,16 @@ if (params["syncSessionId"]) {
     setAutoPublish(true)
     console.log("Tab was initially set to autoPush=", autoPush)
     // actually publish
+    initializeAfterLoad();
+  }
+}
+
+function initializeAfterLoad() {
+  elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];
+  if (elHeader) {
     publishSongUrl()
+  } else {
+    setTimeout(initializeAfterLoad, 500)
   }
 }
 
@@ -176,7 +186,8 @@ function publish(event) {
 function publishSongUrl() {
   // send message to background worker
   let actualSongUrl = getSongUrl(document.location.href);
-  console.log("publishSongUrl", actualSongUrl, elHeader.innerText)
+  console.log("publishSongUrl", actualSongUrl)
+  console.log(document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0])
   chrome.runtime.sendMessage({
     action: "publish",
     url: actualSongUrl,
@@ -389,3 +400,7 @@ function dragElement(elmnt, dragpoint) {
     document.onmousemove = null;
   }
 }
+
+window.onload = function() {
+  console.log("running onload")
+  elHeader = document.getElementsByTagName('main')[0].children[1].getElementsByTagName('header')[0];}
