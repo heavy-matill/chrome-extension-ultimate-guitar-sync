@@ -32,6 +32,9 @@
   padding: 0.5em;
   margin: 0.1em;
 }
+#floatbar > *:not(:last-child){
+  padding-right: 0;
+}
 
 .hide-sync {
   display: none;
