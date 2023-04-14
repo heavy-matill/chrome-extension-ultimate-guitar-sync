@@ -1,7 +1,7 @@
 var html = `
   <div id="floatbar" tabindex="1">
     <a id="sync-link" class="sync-link hide-sync"></a>
-    <div id="sync-get" class="sync-icon sync-icon-button sync-active">
+    <div id="sync-get" class="sync-icon sync-icon-button sync-inactive">
       <svg viewBox="0 0 640 512 " width="100" title="download">
         <path d="m 640,357.65545 c 0,64 -64,121.6 -128,121.6 -64,0 -309.5597,1.67523 -384,0 -64,0 -128,-64 -128,-128 v -192 C 0,95.255453 64,31.255453 128,31.255453 h 384 c 64,0 128,64 128,127.999997 z M 425.38689,253.73585 h -65.4 v -112 c 0,-8.8 -7.2,-16 -16,-16 h -48 c -8.8,0 -16,7.20001 -16,16 v 112 h -65.4 c -14.3,0 -21.4,17.2 -11.3,27.3 l 105.4,105.4 c 6.2,6.2 16.4,6.2 22.6,0 l 105.4,-105.4 c 10.1,-10.1 2.9,-27.3 -11.3,-27.3 z" />
       </svg>
