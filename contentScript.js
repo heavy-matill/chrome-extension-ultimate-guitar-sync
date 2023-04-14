@@ -350,7 +350,20 @@ const elFloatbar = document.getElementById("floatbar");
 elFloatbar.style.lineHeight = "16px";
 elFloatbar.style.top = initialDragTop;
 elFloatbar.style.left = initialDragLeft;
+setTopLeft(Number(initialDragTop.replace("px", "")), Number(initialDragLeft.replace("px", "")))
 dragElement(elFloatbar, elFloatbar);
+
+function reportWindowSize() {
+  setTopLeft(Number(elFloatbar.style.top.replace("px", "")), Number(elFloatbar.style.left.replace("px", "")))
+}
+
+
+function setTopLeft(top, left) {
+  elFloatbar.style.top = Math.min(window.innerHeight - elFloatbar.offsetHeight, Math.max(0, top)) + "px";
+  elFloatbar.style.left = Math.min(elFloatbar.parentElement.offsetWidth - elFloatbar.offsetWidth - 1, Math.max(0, left)) + "px";
+}
+
+window.onresize = reportWindowSize;
 
 function dragElement(elmnt, dragpoint) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -387,9 +400,9 @@ function dragElement(elmnt, dragpoint) {
     pos3 = e.clientX;
     pos4 = e.clientY;
     // set the element's new position:
-    elmnt.style.top = Math.min(elmnt.parentElement.offsetHeight - elmnt.offsetHeight, Math.max(0, elmnt.offsetTop - pos2)) + "px";
-    elmnt.style.left = Math.min(elmnt.parentElement.offsetWidth - elmnt.offsetWidth - 1, Math.max(0, elmnt.offsetLeft - pos1)) + "px";
+    setTopLeft(elmnt.offsetTop - pos2, elmnt.offsetLeft - pos1);
   }
+
 
   function closeDragElement() {
     console.log("closeDragElement")
