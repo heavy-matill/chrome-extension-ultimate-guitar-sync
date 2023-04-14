@@ -127,7 +127,7 @@ if (params["syncSessionId"]) {
   autoPush = false;
   setSessionId(sessionId, true)
 } else {
-  setSessionId(sessionId, false)
+  setSessionId(sessionId, true)
   if (tabSettings?.autoGet) {
     setAutoGet(true)
   } else if (tabSettings?.autoPush) {
