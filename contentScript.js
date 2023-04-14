@@ -251,10 +251,12 @@ function countUsers() {
 }
 
 // hide push button if url is not a song
+/*
+i may still want to be able to toggle this
 if (!document.location.href.includes(baseSongUrl)) {
   console.log("not a song url")
   elPublish.classList.add("hide-sync")
-}
+}*/
 
 
 /* old */
